@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  password String
+  forms Form[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Form {
+  id String @id @default(uuid())
+  title String
+  description String?
+  userId String
+  status String @default("DRAFT") //draft, Published
+  isPublished Boolean @default(false)
+  fields FormField[]
+  submissions FormSubmission[]
+  formShareLinks FormShareLink[]
+
+  settings Json?
+  theme Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model FormField {
+  id String @id @default(uuid())
+  formId String
+  type String
+  label String
+  category String
+  order Int @default(0)
+  helpText String?
+  placeholder String?
+  required Boolean @default(false)
+  attributes Json @default("{}")
+  showWhen Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@index([type])
+}
+
+model FormSubmission {
+  id String @id @default(uuid())
+  formId String
+  userId String?
+  data Json
+  startedAt DateTime?
+  completedAt DateTime?
+  timeSpent Int?
+
+  //For quizzes
+  score Float?
+  totalPoints Float?
+
+  createdAt DateTime @default(now())
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@index([userId])
+
+}
+
+model FormShareLink {
+  id String @id @default(uuid())
+  formId String @unique
+  slug String @unique
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+}
